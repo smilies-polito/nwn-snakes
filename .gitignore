@@ -7,3 +7,5 @@ dput.sh
 *.class
 *.bak
 __pycache__
+*.png
+./idea
