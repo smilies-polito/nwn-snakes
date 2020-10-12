@@ -1873,7 +1873,7 @@ class Node (NetElement) :
 
 class Place (Node) :
     "A place of a Petri net."
-    def __init__ (self, name, tokens=[], check=None) :
+    def __init__ (self, name, tokens=[], net=None, check=None) :    #TODO aggiunta parametro net come puntatore alla rete di appartenenza
         """Initialise with name, tokens and typecheck. `tokens` may be
         a single value or an iterable object. `check` may be `None`
         (any token allowed) or a type from module `snakes.typing.
@@ -1891,10 +1891,15 @@ class Place (Node) :
         """
         self.name = name
         self.tokens = MultiSet()
+        self.net = net
         if check is None :
             self._check = tAll
         else :
             self._check = check
+        if self.net != None:
+            #print(type(tokens), "pd")
+            #TODO estendere la modifica all'intero set di token
+            tokens[0].set_parent(self)  #tokens[0] si suppone essere una rete di petri (l'unica)
         self.add(tokens)
     def copy (self, name=None) :
         """Return a copy of the place, with no arc attached.
@@ -2169,6 +2174,12 @@ class Place (Node) :
         """
         self.check(iterate(tokens))
         self.tokens = MultiSet(tokens)
+
+    """ funzione di "sincronizzazione" dell'evoluzione dello stato """
+    def sync(self):
+        print("<madonne>")
+        self.tokens.add([BlackToken()]) # TODO customize token type
+        print("</madonne>")
 
 class Transition (Node) :
     "A transition in a Petri net."
@@ -2655,6 +2666,12 @@ class Transition (Node) :
                 place.remove(label.flow(binding))
             for place, label in self.output() :
                 place.add(label.flow(binding))
+                try:
+                    """ aggiorna il posto padre della rete a cui questo posto appartiene """
+                    # TODO passare qui il tipo di token?
+                    place.net.parent.sync()
+                except:
+                    pass
         else :
             raise ValueError("transition not enabled for %s" % binding)
 
@@ -2991,7 +3008,7 @@ class PetriNet (object) :
     >>> n.transition('t') is t
     True
     """
-    def __init__ (self, name) :
+    def __init__ (self, name, parent=None) : #aggiunto parametro parent come puntatore al posto di appartenenza (quando il token è una PetriNet)
         """Initialise with a name that may be an arbitrary string.
 
         >>> PetriNet('N')
@@ -3001,6 +3018,7 @@ class PetriNet (object) :
         @type name: `str`
         """
         self.name = name
+        self.parent = parent
         self._trans = {}
         self._place = {}
         self._node = {}
@@ -3040,6 +3058,11 @@ class PetriNet (object) :
             for place, label in trans.output() :
                 result.add_output(place.name, trans.name, label.copy())
         return result
+
+    """ permette di settare il posto genitore quando questa PetriNet è un token in tale posto """
+    def set_parent(self, place):
+        self.parent = place
+
     __pnmltag__ = "net"
     @classmethod
     def _pnml_dump_arc (cls, label) :
