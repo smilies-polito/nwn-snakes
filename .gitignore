@@ -9,3 +9,4 @@ dput.sh
 __pycache__
 *.png
 ./idea
+main.py
