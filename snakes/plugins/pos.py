@@ -146,7 +146,7 @@ class Position (object) :
 @plugin("snakes.nets")
 def extend (module) :
     class Place (module.Place) :
-        def __init__ (self, name, tokens=[], net=None, check=None, **args) :
+        def __init__ (self, name, tokens=[], check=None, **args) :
             """If no position is given `(0, 0)` is chosen
 
             >>> Place('p').pos
@@ -159,7 +159,7 @@ def extend (module) :
             """
             x, y = args.pop("pos", (0, 0))
             self.pos = Position(x, y)
-            module.Place.__init__(self, name, tokens, net, check, **args)
+            module.Place.__init__(self, name, tokens, check, **args)
         # apidoc skip
         def copy (self, name=None, **args) :
             x, y = args.pop("pos", self.pos())

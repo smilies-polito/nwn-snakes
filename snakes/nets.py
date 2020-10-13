@@ -1873,10 +1873,11 @@ class Node (NetElement) :
 
 class Place (Node) :
     "A place of a Petri net."
-    def __init__ (self, name, tokens=[], net=None, check=None) :    #TODO aggiunta parametro net come puntatore alla rete di appartenenza
-        """Initialise with name, tokens and typecheck. `tokens` may be
+    def __init__ (self, name, tokens=[], check=None) :
+        """Initialise with name, tokens, net and typecheck. `tokens` may be
         a single value or an iterable object. `check` may be `None`
         (any token allowed) or a type from module `snakes.typing.
+        `net` maybe `None`; it is the PetriNet this place belongs to.
 
         >>> Place('p', range(3), tInteger)
         Place('p', MultiSet([...]), Instance(int))
@@ -1885,21 +1886,20 @@ class Place (Node) :
         @type name: `str`
         @param tokens: a collection of tokens that mark the place
         @type tokens: `collection`
+        @param net: the PetriNet this Place belongs to (or `None`)
+        @type net: `PetriNet`
         @param check: a constraint on the tokens allowed in the place
             (or `None` for no constraint)
         @type check: `Type`
         """
         self.name = name
         self.tokens = MultiSet()
-        self.net = net
         if check is None :
             self._check = tAll
         else :
             self._check = check
-        if self.net != None:
-            #print(type(tokens), "pd")
-            #TODO estendere la modifica all'intero set di token
-            tokens[0].set_parent(self)  #tokens[0] si suppone essere una rete di petri (l'unica)
+        # if token is a PetriNet, set reference to this Place
+        [ t.set_parent(self) for t in tokens if isinstance(t, PetriNet) ]
         self.add(tokens)
     def copy (self, name=None) :
         """Return a copy of the place, with no arc attached.
@@ -2175,11 +2175,9 @@ class Place (Node) :
         self.check(iterate(tokens))
         self.tokens = MultiSet(tokens)
 
-    """ funzione di "sincronizzazione" dell'evoluzione dello stato """
-    def sync(self):
-        print("<madonne>")
-        self.tokens.add([BlackToken()]) # TODO customize token type
-        print("</madonne>")
+    """ update marking with token """
+    def sync(self, tk):
+        self.tokens.add(tk)
 
 class Transition (Node) :
     "A transition in a Petri net."
@@ -2197,11 +2195,16 @@ class Transition (Node) :
         """
         self._input = {}
         self._output = {}
+        self._notify = []
         if guard is None :
             self.guard = Expression("True")
         else :
             self.guard = guard
         self.name = name
+
+    def set_notify(self, places):
+        [ self._notify.append(p) for p in places ] # if isinstance(p, Place) ]
+
     def copy (self, name=None) :
         """Return a copy of the transition, with no arc attached.
 
@@ -2667,9 +2670,13 @@ class Transition (Node) :
             for place, label in self.output() :
                 place.add(label.flow(binding))
                 try:
-                    """ aggiorna il posto padre della rete a cui questo posto appartiene """
-                    # TODO passare qui il tipo di token?
-                    place.net.parent.sync()
+                    """ Notify places """
+                    for n in self._notify:
+                        if isinstance(n, PetriNet):
+                            # maialata da manuale
+                            n.place(list(binding.dict().values())[0]).sync(BlackToken())
+                        elif isinstance(n, Place):
+                            n.sync(place.name)
                 except:
                     pass
         else :
@@ -3008,8 +3015,9 @@ class PetriNet (object) :
     >>> n.transition('t') is t
     True
     """
-    def __init__ (self, name, parent=None) : #aggiunto parametro parent come puntatore al posto di appartenenza (quando il token è una PetriNet)
-        """Initialise with a name that may be an arbitrary string.
+    def __init__ (self, name, parent=None) :
+        """Initialise with a name that may be an arbitrary string
+           and a parent `Place` (default `None`) if this `PetriNet` is a token.
 
         >>> PetriNet('N')
         PetriNet('N')
@@ -3059,7 +3067,7 @@ class PetriNet (object) :
                 result.add_output(place.name, trans.name, label.copy())
         return result
 
-    """ permette di settare il posto genitore quando questa PetriNet è un token in tale posto """
+    """ set parent place when this PetriNet is a token for that place """
     def set_parent(self, place):
         self.parent = place
 
@@ -3749,8 +3757,9 @@ class PetriNet (object) :
         del t.pre[place]
         if hasattr(l, "globals") :
             l.globals.detach(self.globals)
-    def add_output (self, place, trans, label) :
+    def add_output (self, place, trans, label, notify=None) :
         """Add an output arc between `place` and `trans` (nodes names).
+           Optional: notify child place in net token
 
         An output arc is directed from a transition toward a place.
 
@@ -3775,6 +3784,7 @@ class PetriNet (object) :
         @type trans: `str`
         @param label: the annotation of the arc
         @type label: `ArcAnnotation`
+        @param notify: list of `Place`s in upper/lower net to send tokens to
         @raise ConstraintError: in case of anything not allowed
         """
         try :
@@ -3786,6 +3796,8 @@ class PetriNet (object) :
         except KeyError :
             raise NodeError("transition '%s' not found" % trans)
         t.add_output(p, label)
+        if notify != None:
+            t.set_notify(notify)
         p.pre[trans] = label
         t.post[place] = label
         if hasattr(label, "globals") :
