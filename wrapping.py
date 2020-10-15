@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from enum import Enum
 import random
 
@@ -136,12 +137,12 @@ class Module(ABC):
         return s
 
     def collect_transitions(self):
-        return self._collect_transitions(self._net, {})
+        return self._collect_transitions(self._net, defaultdict(dict))
 
     def _collect_transitions(self, node, transitions):
         if type(node) == PetriNet:
             for t in node.transition():
-                transitions[t.name] = t
+                transitions[node.name][t.name] = t
             for p in node.place():
                 transitions = self._collect_transitions(p, transitions)
             return transitions
@@ -151,9 +152,13 @@ class Module(ABC):
             return transitions
         return transitions
 
+    # TODO parametrizzare la percentuale di transizioni pescate per modello
     def fire(self):
-        for t in self._transitions.values():
-            if(len(t.modes()) > 0):
+        for node in self._transitions.keys():
+            # filtro solo le transizioni abilitate a scattare (per cui ci sono token sufficienti nel posto di origine)
+            transitions = [ t for t in self._transitions[node].values() if len(t.modes()) > 0 ]
+            # faccio scattare solo il 60% delle transizioni abilitate
+            for t in random.sample(transitions, int(0.6 * len(transitions))):
                 try:
                     t.fire(random.choice(t.modes()))
                 except:
