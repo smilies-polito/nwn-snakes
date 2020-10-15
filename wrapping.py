@@ -71,11 +71,42 @@ class Module(ABC):
         self._watch = None #TODO places to watch
         #print(self._tree)
         #print(self._tree.dump_marking())
-        print(self._transitions)
+        #print(self._transitions)
 
     @abstractmethod
     def build_net_structure(self) -> PetriNet:
         pass
+
+    def set_marking(self, marking):
+        self._set_marking(self._net, marking)
+
+    def _set_marking(self, node, marking):
+        if type(node) == PetriNet:
+            node.set_marking(marking[node.name])
+            for p in node.place():
+                self._set_marking(p, marking)
+            return
+        elif type(node) == Place:
+            for tk in node.tokens:
+                self._set_marking(tk, marking)
+            return
+        return
+
+    def get_marking(self) -> {}:
+        return self._get_marking(self._net, {})
+
+    def _get_marking(self, node, marking):
+        if type(node) == PetriNet:
+            marking[node.name] = node.get_marking()
+            for p in node.place():
+                self._get_marking(p, marking)
+            return marking
+        elif type(node) == Place:
+            for tk in node.tokens:
+                marking = self._get_marking(tk, marking)
+            return marking
+        return marking
+
 
     def __repr__(self):
         return self.name
@@ -122,7 +153,6 @@ class Module(ABC):
 
     def fire(self):
         for t in self._transitions.values():
-            #print(t.modes())
             if(len(t.modes()) > 0):
                 try:
                     t.fire(random.choice(t.modes()))
