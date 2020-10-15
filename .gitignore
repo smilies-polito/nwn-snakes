@@ -8,5 +8,5 @@ dput.sh
 *.bak
 __pycache__
 *.png
-./idea
+.idea/*
 main*.py
