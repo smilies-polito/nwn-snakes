@@ -58,7 +58,7 @@ class bacterial_consortium(Module):
         controller_lower_net.add_output('_3oc6hsl', 'x', Value(dot), notify=[upper_net.place('controller_cell')])
 
         # transizione della rete superiore sincronizzata con rete inferiore
-        upper_net.add_transition(Transition('start'))
+        #upper_net.add_transition(Transition('start'))
         #upper_net.add_output('controller_cell', 'start', Variable('x'), notify=[controller_lower_net])
 
         upper_net.add_transition(Transition('diffusion_l', Expression('isinstance(x, str)')))
