@@ -1,7 +1,7 @@
 from wrapping import *
 
 
-class mycoplasma_chromosome(Module):
+class bacterial_consortium(Module):
     def __init__(self, name):
         super().__init__(name)
 
