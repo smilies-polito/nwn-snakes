@@ -83,7 +83,7 @@ class Module(ABC):
 
     def _set_marking(self, node, marking):
         if type(node) == PetriNet:
-            node.set_marking(marking[node.name])
+            node.add_marking(marking[node.name])
             for p in node.place():
                 self._set_marking(p, marking)
             return
