@@ -1,7 +1,7 @@
 from wrapping import *
 
 
-class mycoplasma_chromosome(Module):
+class bacterial_consortium(Module):
     def __init__(self, name):
         super().__init__(name)
 
@@ -59,7 +59,7 @@ class mycoplasma_chromosome(Module):
 
         # transizione della rete superiore sincronizzata con rete inferiore
         upper_net.add_transition(Transition('start'))
-        upper_net.add_output('controller_cell', 'start', Variable('x'), notify=[controller_lower_net])
+        #upper_net.add_output('controller_cell', 'start', Variable('x'), notify=[controller_lower_net])
 
         upper_net.add_transition(Transition('diffusion_l', Expression('isinstance(x, str)')))
         upper_net.add_input('controller_cell', 'diffusion_l', Variable('x'))
