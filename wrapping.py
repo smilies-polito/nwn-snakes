@@ -94,7 +94,7 @@ class Module(ABC):
         return
 
     def get_marking(self) -> {}:
-        return self._get_marking(self._net, {})
+        return self._get_marking(self._net, defaultdict())
 
     def _get_marking(self, node, marking):
         if type(node) == PetriNet:
