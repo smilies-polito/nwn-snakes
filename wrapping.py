@@ -196,6 +196,7 @@ class Module(ABC):
 
     # TODO parametrizzare la percentuale di transizioni pescate per modello
     def fire(self, step, prob=0.6):
+        print("step", step)
         for node in self._transitions.keys():
             if(step % self._net_timescales[node] == 0):
                 # filtro solo le transizioni abilitate a scattare (per cui ci sono token sufficienti nel posto di origine)
@@ -204,7 +205,7 @@ class Module(ABC):
                 probs = np.random.choice([False, True], size=len(transitions), p=[1-prob, prob])
                 for i, t in enumerate(transitions):
                     if probs[i] == True:
-                        print("step", step, " -- net", node, " firing transition", t.name)
+                        print("\t-- net", node, " firing transition", t.name)
                         try:
                             t.fire(random.choice(t.modes()))
                         except:
@@ -228,7 +229,3 @@ class Module(ABC):
                 self._draw(tk, path)
             return
         return
-
-
-
-

@@ -2691,7 +2691,6 @@ class Transition (Node) :
                 try:
                     """ Notify output places """
                     for n in self._notify_output:
-                        print(n.name, type(n))
                         if isinstance(n, PetriNet):
                             # maialata da manuale
                             place : str = list(binding.dict().values())[0]

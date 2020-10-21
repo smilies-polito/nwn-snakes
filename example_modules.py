@@ -139,6 +139,6 @@ class simple_bacterial_consortium(Module):
         # upper_net.add_transition(Transition('transustanziazione', Expression('type(x) == str')))
         # upper_net.add_input('target_cell', 'transustanziazione', Variable('x'))
         # upper_net.add_output('controller_cell', 'transustanziazione', Expression('x'))
-        print("modes: ", len(controller_lower_net.transition("z").modes()))
+        #print("modes: ", len(controller_lower_net.transition("z").modes()))
 
         return upper_net

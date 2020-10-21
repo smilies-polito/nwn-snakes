@@ -2,9 +2,10 @@ from wrapping import *
 
 #TODO controlli!
 class Simulator():
-    def __init__(self, m = None, steps = None, output_path = None, draw_nets = False):
+    def __init__(self, m, steps, firing_prob = 0.6, output_path = ".", draw_nets = False):
         self._module = m
         self._steps = steps
+        self._firing_prob = firing_prob
         self._output_path = output_path
         self._draw_nets = draw_nets
         self._markings = {}
@@ -29,7 +30,7 @@ class Simulator():
             if self._draw_nets:
                 self._module.draw(os.path.join(self._output_path, "0_" + self._module.name + "_"))
             for i in range(1, self._steps + 1):
-                self._module.fire(i)
+                self._module.fire(i, prob=self._firing_prob)
                 if self._draw_nets:
                     self._module.draw(os.path.join(self._output_path, str(i) + "_" + self._module.name + "_"))
                 if self._output_path:
