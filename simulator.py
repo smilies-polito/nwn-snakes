@@ -1,11 +1,15 @@
-from bacterial_consortium import bacterial_consortium
 from wrapping import *
 
+#TODO controlli!
 class Simulator():
-    def __init__(self, m, steps, output = None):
+    def __init__(self, m = None, steps = None, output_path = None, draw_nets = False):
         self._module = m
         self._steps = steps
-        self.output = output if output is not None else sys.stdout
+        self._output_path = output_path
+        self._draw_nets = draw_nets
+        self._markings = {}
+        if not os.path.exists(self._output_path):
+            os.mkdir(self._output_path)
 
     def set_module(self, m: Module):
         self._module = m
@@ -13,31 +17,29 @@ class Simulator():
     def set_steps(self, steps):
         self._steps = steps
 
+    def set_output_path(self, output_path):
+        self._output_path = output_path
+
+    def set_draw(self, draw):
+        self._draw = draw
+
     def execute(self): #TODO livello di output (quiet, verbose, debug), tipi di output (csv e/o img)
-        for i in range(0, self._steps):
-            self._module.fire()
+        if self._module and self._steps:
+            self._markings[0] = self._module.get_marking_count()
+            if self._draw_nets:
+                self._module.draw(os.path.join(self._output_path, "0_" + self._module.name + "_"))
+            for i in range(1, self._steps + 1):
+                self._module.fire(i)
+                if self._draw_nets:
+                    self._module.draw(os.path.join(self._output_path, str(i) + "_" + self._module.name + "_"))
+                if self._output_path:
+                    self._module.print_marking_count(i, output_path = self._output_path)
+                self._markings[i] = self._module.get_marking_count()
+        else:
+            raise ConstraintError("A Module and the number of simulation steps are required.")
 
     def execute_step_by_step(self):
         pass
 
-test_module = bacterial_consortium("test")
-#print(test_module)
-marking = test_module.get_marking()
-# TODO ritornare una mappa custom con "=" ridefinito per fare un append e sostituire l'append di set_marking nel wrapper?
-# TODO sarebbe comodo poter indirizzare con la sintassi "." invece che quadre e stringhe
-marking['upper_net']['controller_cell'] = [BlackToken()]*3
-test_module.set_marking(marking)
-
-print(marking)
-
-
-test_module.draw(str(0) + "_" + test_module.name + "_")
-
-for i in range(1, 2):
-    test_module.fire()
-    test_module.draw(str(i) + "_" + test_module.name + "_")
-
-#simulator = Simulator(bacterial_consortium, 3)
-#simulator.execute()
 
 
