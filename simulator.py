@@ -64,8 +64,7 @@ class Simulator():
                 for i, token in enumerate(d[net][place]):
                     X = d[net][place][token].keys()
                     Y = d[net][place][token].values()
-                    #plt.plot(X, Y, label=token)
-                    ax.plot(X, Y, label=token)
+                    ax.plot(X, Y, label=token.lstrip("_"))
                 fig.legend()
                 #plt.show()
                 plt.savefig(os.path.join(self._output_path, title), bbox_inches="tight")
