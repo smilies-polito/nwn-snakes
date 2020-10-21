@@ -12,34 +12,34 @@ class net1(Module):
 
         # rete "inferiore" a
         lower_net_a.add_place(Place("p1", []))
-        lower_net_a.add_place(Place("p2", []))
-        lower_net_a.add_place(Place("p3", []))
-        lower_net_a.add_place(Place("p4", []))
+        lower_net_a.add_place(Place("a", []))
+        lower_net_a.add_place(Place("b", []))
+        lower_net_a.add_place(Place("c", []))
 
         # transizioni rete a
         lower_net_a.add_transition(Transition('t1'))
         lower_net_a.add_input('p1', 't1', Value(dot))
         lower_net_a.add_output('p1', 't1', Value(dot))
-        lower_net_a.add_output('p2', 't1', MultiArc([Value(dot), Value(dot)]))
+        lower_net_a.add_output('a', 't1', MultiArc([Value(dot), Value(dot)]))
 
         lower_net_a.add_transition(Transition('t2'))
-        lower_net_a.add_input('p2', 't2', Value(dot))
+        lower_net_a.add_input('a', 't2', Value(dot))
 
         lower_net_a.add_transition(Transition('t3'))
-        lower_net_a.add_input('p2', 't3', Value(dot))
+        lower_net_a.add_input('a', 't3', Value(dot))
 
         # rete "inferiore" b
-        lower_net_b.add_place(Place("p1", []))
+        lower_net_b.add_place(Place("d", []))
         lower_net_b.add_place(Place("p2", []))
-        lower_net_b.add_place(Place("p3", []))
+        lower_net_b.add_place(Place("e", []))
 
         # transizioni rete b
         lower_net_b.add_transition(Transition("t1"))
         lower_net_b.add_output("p2", "t1", Value(dot))
-        lower_net_b.add_output("p3", "t1", Value(dot))
+        lower_net_b.add_output("e", "t1", Value(dot))
 
         lower_net_b.add_transition(Transition("t2"))
-        lower_net_b.add_input("p3", "t2", Value(dot))
+        lower_net_b.add_input("e", "t2", Value(dot))
 
         # rete superiore
         upper_net.add_place(Place("p1", [lower_net_a]))
@@ -48,7 +48,7 @@ class net1(Module):
         # transizioni rete superiore
         #TODO: automatically add Expression("type(x) != PetriNet") for each transition if net contains net tokens
         #upper_net.add_transition(Transition("t_from_left", Expression("str(x) == x")))
-        upper_net.add_transition(Transition("t_from_left", Expression("type(x) != PetriNet")))
+        upper_net.add_transition(Transition("t_from_left", Expression("not isinstance(x, PetriNet)")))
         upper_net.add_input("p1", "t_from_left", Variable("x"))
         upper_net.add_output("p2", "t_from_left", Expression("x"), notify=[lower_net_b])
 
@@ -57,10 +57,10 @@ class net1(Module):
         upper_net.add_output("p1", "t_from_right", Variable("x"), notify=[lower_net_a])
 
         # transizioni che coinvolgono la rete superiore
-        lower_net_a.add_output("p3", "t2", Value(dot), notify=[upper_net.place("p1")])
-        lower_net_a.add_output("p4", "t3", Value(dot), notify=[upper_net.place("p1")])
-        lower_net_b.add_input("p1", "t1", Value(dot), notify=[upper_net.place("p2")])
-        lower_net_b.add_output("p1", "t2", Value(dot), notify=[upper_net.place("p2")])
+        lower_net_a.add_output("b", "t2", Value(dot), notify=[upper_net.place("p1")])
+        lower_net_a.add_output("c", "t3", Value(dot), notify=[upper_net.place("p1")])
+        lower_net_b.add_input("d", "t1", Value(dot), notify=[upper_net.place("p2")])
+        lower_net_b.add_output("d", "t2", Value(dot), notify=[upper_net.place("p2")])
 
         return upper_net
 
