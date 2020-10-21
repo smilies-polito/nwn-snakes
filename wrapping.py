@@ -8,6 +8,7 @@ from snakes.nets import *
 import snakes.plugins
 snakes.plugins.load("gv", "snakes.nets", "nets")
 from nets import *
+import numpy as np
 
 
 class AdvEnum(Enum):
