@@ -50,9 +50,6 @@ class Simulator():
                 for place in self._markings[step][net].keys():
                     for tk, n in self._markings[step][net][place].items():
                         d[net][place][str(tk)][step] = n
-        #print(d["lower_net_a"]["p1"]["dot"])
-        #plt.scatter(d["lower_net_a"]["p1"]["dot"].keys(), d["lower_net_a"]["p1"]["dot"].values(), color='k')
-        #plt.show()
 
         for net in d:
             for place in d[net]:
