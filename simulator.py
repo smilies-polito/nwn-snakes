@@ -1,4 +1,6 @@
 from wrapping import *
+import pylab as plt
+import pandas as pd
 
 #TODO controlli!
 class Simulator():
@@ -25,22 +27,48 @@ class Simulator():
         self._draw = draw
 
     def execute(self): #TODO livello di output (quiet, verbose, debug), tipi di output (csv e/o img)
-        if self._module and self._steps:
-            self._markings[0] = self._module.get_marking_count()
+        self._markings[0] = self._module.get_marking_count()
+        if self._draw_nets:
+            self._module.draw(os.path.join(self._output_path, "0_" + self._module.name + "_"))
+        for i in range(1, self._steps + 1):
+            self._module.fire(i, prob=self._firing_prob)
             if self._draw_nets:
-                self._module.draw(os.path.join(self._output_path, "0_" + self._module.name + "_"))
-            for i in range(1, self._steps + 1):
-                self._module.fire(i, prob=self._firing_prob)
-                if self._draw_nets:
-                    self._module.draw(os.path.join(self._output_path, str(i) + "_" + self._module.name + "_"))
-                if self._output_path:
-                    self._module.print_marking_count(i, output_path = self._output_path)
-                self._markings[i] = self._module.get_marking_count()
-        else:
-            raise ConstraintError("A Module and the number of simulation steps are required.")
+                self._module.draw(os.path.join(self._output_path, str(i) + "_" + self._module.name + "_"))
+            if self._output_path:
+                self._module.print_marking_count(i, output_path = self._output_path)
+            self._markings[i] = self._module.get_marking_count()
 
     def execute_step_by_step(self):
         pass
 
+    def make_charts(self):
+        tree = lambda: defaultdict(tree)
 
+        d = tree()
+        for step in list(self._markings.keys()):
+            for net in self._markings[step].keys():
+                for place in self._markings[step][net].keys():
+                    for tk, n in self._markings[step][net][place].items():
+                        d[net][place][str(tk)][step] = n
+        #print(d["lower_net_a"]["p1"]["dot"])
+        #plt.scatter(d["lower_net_a"]["p1"]["dot"].keys(), d["lower_net_a"]["p1"]["dot"].values(), color='k')
+        #plt.show()
 
+        for net in d:
+            for place in d[net]:
+                fig, ax = plt.subplots()
+                ax.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
+                ax.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
+                plt.subplots_adjust(right=0.75)
+                plt.xlabel("simulation step")
+                plt.ylabel("# tokens")
+                title = "place " + place + " (" + net + ")"
+                plt.title(title)
+                for i, token in enumerate(d[net][place]):
+                    X = d[net][place][token].keys()
+                    Y = d[net][place][token].values()
+                    #plt.plot(X, Y, label=token)
+                    ax.plot(X, Y, label=token)
+                fig.legend()
+                #plt.show()
+                plt.savefig(os.path.join(self._output_path, title), bbox_inches="tight")
