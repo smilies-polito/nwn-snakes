@@ -28,8 +28,8 @@ class Simulator():
 
     def execute(self): #TODO livello di output (quiet, verbose, debug), tipi di output (csv e/o img)
         self._markings[0] = self._module.get_marking_count()
-        if self._draw_nets:
-            self._module.draw(os.path.join(self._output_path, "0_" + self._module.name + "_"))
+        #if self._draw_nets:
+        self._module.draw(os.path.join(self._output_path, "0_" + self._module.name + "_"))
         for i in range(1, self._steps + 1):
             self._module.fire(i, prob=self._firing_prob)
             if self._draw_nets:
