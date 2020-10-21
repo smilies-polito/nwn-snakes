@@ -1,7 +1,10 @@
+import collections
+import csv
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from enum import Enum
 import random
+import numpy as np
 
 from snakes.nets import *
 import snakes.plugins
@@ -46,7 +49,9 @@ class HierarchyTree(): #create a tree that just stores references to all the net
         for place in self.root.place():
             pass
 
-
+class DeepDict(defaultdict):
+    def __call__(self):
+        return DeepDict(self.default_factory)
 
 class Module(ABC):
     """
@@ -67,12 +72,11 @@ class Module(ABC):
         self.name = name
         self._clock = 0
         self._net = self.build_net_structure()
+        self._net.globals.declare("from snakes.nets import *; import snakes.plugins; snakes.plugins.load('gv', 'snakes.nets', 'nets')")
+        self._net_timescales = self.collect_timescales()
         self._transitions = self.collect_transitions()
-        #self._tree = HierarchyTree(self._net)
+        self._marking_count = self.get_marking_count()
         self._watch = None #TODO places to watch
-        #print(self._tree)
-        #print(self._tree.dump_marking())
-        #print(self._transitions)
 
     @abstractmethod
     def build_net_structure(self) -> PetriNet:
@@ -83,7 +87,7 @@ class Module(ABC):
 
     def _set_marking(self, node, marking):
         if type(node) == PetriNet:
-            node.add_marking(marking[node.name])
+            node.set_marking(marking[node.name])
             for p in node.place():
                 self._set_marking(p, marking)
             return
@@ -93,8 +97,8 @@ class Module(ABC):
             return
         return
 
-    def get_marking(self) -> {}:
-        return self._get_marking(self._net, {})
+    def get_marking(self):
+        return self._get_marking(self._net, defaultdict())
 
     def _get_marking(self, node, marking):
         if type(node) == PetriNet:
@@ -108,16 +112,39 @@ class Module(ABC):
             return marking
         return marking
 
+    def get_marking_count(self):
+        return self._get_marking_count(self._net, {}, "")
+
+    def _get_marking_count(self, node, marking, net_name) -> {}:
+        if type(node) == PetriNet:
+            marking[node.name] = {}
+            for p in node.place():
+                marking = self._get_marking_count(p, marking, node.name)
+            return marking
+        elif type(node) == Place:
+            #if len(node.tokens) > 0:
+            marking[net_name][node.name] = dict(collections.Counter(node.tokens))
+            for tk in node.tokens:
+                marking = self._get_marking_count(tk, marking, net_name)
+            return marking
+        #elif isinstance(node, Token):
+        #    s += str(node) + " "
+        return marking
+
+    def print_marking_count(self, i, output_path = "."):
+        import pandas as pd
+        marking = self.get_marking_count()
+        for d in marking.keys():
+            out = os.path.join(output_path, "marking_" + d + " .csv")
+            header = not os.path.exists(out)
+            with open(out, 'a') as f:
+                pd.DataFrame.from_dict({i: marking[d]}).stack().unstack(level=[0]).to_csv(f, header=header)
 
     def __repr__(self):
         return self.name
 
     def __str__(self):
         return self._str(self._net, "Module " + self.name + ":\n", 0)
-
-    def dump_marking(self): #TODO parametro file di output?
-        return self._str(self._net, "Module " + self.name + ":\n", 0)
-        #return self._print_hierarchy_tree(self._net, "", 0)
 
     def _str(self, node, s, i):
         if type(node) == PetriNet:
@@ -136,6 +163,21 @@ class Module(ABC):
             s += str(node) + " "
         return s
 
+    def collect_timescales(self) -> {}:
+        return self._collect_timescales(self._net, {})
+
+    def _collect_timescales(self, node, timescales):
+        if type(node) == PetriNet:
+            timescales[node.name] = node.timescale
+            for p in node.place():
+                timescales = self._collect_timescales(p, timescales)
+            return timescales
+        elif type(node) == Place:
+            for tk in node.tokens:
+                timescales = self._collect_timescales(tk, timescales)
+            return timescales
+        return timescales
+
     def collect_transitions(self):
         return self._collect_transitions(self._net, defaultdict(dict))
 
@@ -153,16 +195,25 @@ class Module(ABC):
         return transitions
 
     # TODO parametrizzare la percentuale di transizioni pescate per modello
-    def fire(self):
+    def fire(self, step, prob=0.6):
+        print("step", step)
         for node in self._transitions.keys():
-            # filtro solo le transizioni abilitate a scattare (per cui ci sono token sufficienti nel posto di origine)
-            transitions = [ t for t in self._transitions[node].values() if len(t.modes()) > 0 ]
-            # faccio scattare solo il 60% delle transizioni abilitate
-            for t in random.sample(transitions, int(0.6 * len(transitions))):
-                try:
-                    t.fire(random.choice(t.modes()))
-                except:
-                    pass
+            if(step % self._net_timescales[node] == 0):
+                # filtro solo le transizioni abilitate a scattare (per cui ci sono token sufficienti nel posto di origine)
+                transitions = [ t for t in self._transitions[node].values() if len(t.modes()) > 0 ]
+                # faccio scattare ogni transizione abilitate con una probabilità del 60%
+                probs = np.random.choice([False, True], size=len(transitions), p=[1-prob, prob])
+                for i, t in enumerate(transitions):
+                    if probs[i] == True:
+                        print("\t-- net", node, " firing transition", t.name)
+                        try:
+                            t.fire(random.choice(t.modes()))
+                        except:
+                            # if here: one of the previous transitions selected during this same simulation step
+                            # consumed a token that was needed by this transition to fire
+                            pass
+        #TODO spostare qua l'aggiornamento del count marking
+
 
     def draw(self, path):
         self._draw(self._net, path)
@@ -178,7 +229,3 @@ class Module(ABC):
                 self._draw(tk, path)
             return
         return
-
-
-
-

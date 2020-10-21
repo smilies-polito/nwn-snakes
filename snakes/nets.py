@@ -2176,8 +2176,12 @@ class Place (Node) :
         self.tokens = MultiSet(tokens)
 
     """ update marking with token """
-    def sync(self, tk):
-        self.tokens.add(tk)
+    def sync(self, tk, action): #action = "add" or "remove"
+        if action == "add":
+            self.tokens.add(tk)
+        elif action == "remove":
+            self.tokens.remove(tk)
+
 
 class Transition (Node) :
     "A transition in a Petri net."
@@ -2195,15 +2199,19 @@ class Transition (Node) :
         """
         self._input = {}
         self._output = {}
-        self._notify = []
+        self._notify_input = []
+        self._notify_output = []
         if guard is None :
             self.guard = Expression("True")
         else :
             self.guard = guard
         self.name = name
 
-    def set_notify(self, places):
-        [ self._notify.append(p) for p in places ] # if isinstance(p, Place) ]
+    def set_notify_input(self, places):
+        [ self._notify_input.append(p) for p in places ] # if isinstance(p, Place) ]
+
+    def set_notify_output(self, places):
+        [ self._notify_output.append(p) for p in places ] # if isinstance(p, Place) ]
 
     def copy (self, name=None) :
         """Return a copy of the transition, with no arc attached.
@@ -2667,16 +2675,28 @@ class Transition (Node) :
         if self.enabled(binding) :
             for place, label in self.input() :
                 place.remove(label.flow(binding))
+                try:
+                    """ Notify input places """
+                    for n in self._notify_input:
+                        if isinstance(n, PetriNet):
+                            # maialata da manuale
+                            place : str = list(binding.dict().values())[0]
+                            n.place(place).sync(BlackToken(), "remove")
+                        elif isinstance(n, Place):
+                            n.sync(place.name, "remove")
+                except:
+                    pass
             for place, label in self.output() :
                 place.add(label.flow(binding))
                 try:
-                    """ Notify places """
-                    for n in self._notify:
+                    """ Notify output places """
+                    for n in self._notify_output:
                         if isinstance(n, PetriNet):
                             # maialata da manuale
-                            n.place(list(binding.dict().values())[0]).sync(BlackToken())
+                            place : str = list(binding.dict().values())[0]
+                            n.place(place).sync(BlackToken(), "add")
                         elif isinstance(n, Place):
-                            n.sync(place.name)
+                            n.sync(place.name, "add")
                 except:
                     pass
         else :
@@ -3015,7 +3035,7 @@ class PetriNet (object) :
     >>> n.transition('t') is t
     True
     """
-    def __init__ (self, name, parent=None) :
+    def __init__ (self, name, parent=None, timescale=1) :
         """Initialise with a name that may be an arbitrary string
            and a parent `Place` (default `None`) if this `PetriNet` is a token.
 
@@ -3027,6 +3047,7 @@ class PetriNet (object) :
         """
         self.name = name
         self.parent = parent
+        self.timescale = timescale
         self._trans = {}
         self._place = {}
         self._node = {}
@@ -3674,7 +3695,7 @@ class PetriNet (object) :
                 return self._node[name]
             except KeyError :
                 raise ConstraintError("node '%s' not found" % name)
-    def add_input (self, place, trans, label) :
+    def add_input (self, place, trans, label, notify=None) :
         """Add an input arc between `place` and `trans` (nodes names).
         An input arc is directed from a place toward a transition.
 
@@ -3717,6 +3738,8 @@ class PetriNet (object) :
         except KeyError :
             raise NodeError("transition '%s' not found" % trans)
         t.add_input(p, label)
+        if notify != None:
+            t.set_notify_input(notify)
         p.post[trans] = label
         t.pre[place] = label
         if hasattr(label, "globals") :
@@ -3797,7 +3820,7 @@ class PetriNet (object) :
             raise NodeError("transition '%s' not found" % trans)
         t.add_output(p, label)
         if notify != None:
-            t.set_notify(notify)
+            t.set_notify_output(notify)
         p.pre[trans] = label
         t.post[place] = label
         if hasattr(label, "globals") :
@@ -3910,8 +3933,8 @@ class PetriNet (object) :
         @rtype: `Marking`
         """
         return Marking((name, place.tokens.copy())
-                       for name, place in self._place.items()
-                       if not place.is_empty())
+                       for name, place in self._place.items())
+                       #if not place.is_empty())
     def _set_marking (self, marking) :
         """Assign a marking to the net.
 
