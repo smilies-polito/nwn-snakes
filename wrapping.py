@@ -1,11 +1,9 @@
 import collections
-import csv
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from enum import Enum
 import random
-import numpy as np
-
+import pandas as pd
 from snakes.nets import *
 import snakes.plugins
 snakes.plugins.load("gv", "snakes.nets", "nets")
@@ -132,7 +130,6 @@ class Module(ABC):
         return marking
 
     def print_marking_count(self, i, output_path = "."):
-        import pandas as pd
         marking = self.get_marking_count()
         for d in marking.keys():
             out = os.path.join(output_path, "marking_" + d + " .csv")
