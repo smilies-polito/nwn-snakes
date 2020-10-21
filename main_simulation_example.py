@@ -13,5 +13,6 @@ marking['upper_net']['p2'].add(["tk"]*10)
 test_module.set_marking(marking)
 
 output_path = os.path.join(".", test_module.name + "_results")
-s = Simulator(m=test_module, steps=10, output_path=output_path, draw_nets=True)
+s = Simulator(m=test_module, steps=500, output_path=output_path, draw_nets=False)
 s.execute()
+s.make_charts()
