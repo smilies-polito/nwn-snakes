@@ -9,5 +9,5 @@ dput.sh
 __pycache__
 *.png
 .idea/*
-main*.py
+main[0-9]+.py
 *.csv
