@@ -30,6 +30,7 @@ class Simulator():
         self._markings[0] = self._module.get_marking_count()
         #if self._draw_nets:
         self._module.draw(os.path.join(self._output_path, "0_" + self._module.name + "_"))
+        self._module.print_marking_count(0, output_path=self._output_path)
         for i in range(1, self._steps + 1):
             self._module.fire(i, prob=self._firing_prob)
             if self._draw_nets:
