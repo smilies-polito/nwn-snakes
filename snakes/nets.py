@@ -2180,7 +2180,8 @@ class Place (Node) :
         if action == "add":
             self.tokens.add(tk)
         elif action == "remove":
-            self.tokens.remove(tk)
+            if tk in self.tokens:
+                self.tokens.remove(tk)
 
 
 class Transition (Node) :
@@ -2675,30 +2676,27 @@ class Transition (Node) :
         if self.enabled(binding) :
             for place, label in self.input() :
                 place.remove(label.flow(binding))
-                try:
-                    """ Notify input places """
-                    for n in self._notify_input:
-                        if isinstance(n, PetriNet):
-                            # maialata da manuale
-                            place : str = list(binding.dict().values())[0]
+                """ Notify input places """
+                for n in self._notify_input:
+                    if isinstance(n, PetriNet):
+                        # maialata da manuale
+                        place : str = list(binding.dict().values())[0]
+                        if n.has_place(place):
                             n.place(place).sync(BlackToken(), "remove")
-                        elif isinstance(n, Place):
-                            n.sync(place.name, "remove")
-                except:
-                    pass
+                    elif isinstance(n, Place):
+                        n.sync(str(place), "remove")
+
             for place, label in self.output() :
                 place.add(label.flow(binding))
-                try:
-                    """ Notify output places """
-                    for n in self._notify_output:
-                        if isinstance(n, PetriNet):
-                            # maialata da manuale
-                            place : str = list(binding.dict().values())[0]
+                """ Notify output places """
+                for n in self._notify_output:
+                    if isinstance(n, PetriNet):
+                        # maialata da manuale
+                        place : str = list(binding.dict().values())[0]
+                        if n.has_place(place):
                             n.place(place).sync(BlackToken(), "add")
-                        elif isinstance(n, Place):
-                            n.sync(place.name, "add")
-                except:
-                    pass
+                    elif isinstance(n, Place):
+                        n.sync(str(place), "add")
         else :
             raise ValueError("transition not enabled for %s" % binding)
 
