@@ -209,7 +209,7 @@ class Module(ABC):
         for t in to_fire:
             try:
                 t.fire(random.choice(t.modes()))
-                print("\t-- net", node, " fired transition", t.name)
+                print("\t-- transition", t.name, "fired")
             except Exception as e:
                 # if here: one of the previous transitions selected during this same simulation step
                 # consumed a token that was needed by this transition to fire

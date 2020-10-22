@@ -26,10 +26,11 @@ class Simulator():
     def set_draw(self, draw):
         self._draw = draw
 
-    def execute(self): #TODO livello di output (quiet, verbose, debug), tipi di output (csv e/o img)
+    def execute(self, marking): #TODO livello di output (quiet, verbose, debug), tipi di output (csv e/o img)
+        self._module.set_marking(marking)
         self._markings[0] = self._module.get_marking_count()
-        #if self._draw_nets:
-        self._module.draw(os.path.join(self._output_path, "0_" + self._module.name + "_"))
+        if self._draw_nets:
+            self._module.draw(os.path.join(self._output_path, "0_" + self._module.name + "_"))
         self._module.print_marking_count(0, output_path=self._output_path)
         for i in range(1, self._steps + 1):
             self._module.fire(i, prob=self._firing_prob)
