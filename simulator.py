@@ -45,12 +45,12 @@ class Simulator():
 
     def make_charts(self):
         tree = lambda: defaultdict(tree)
-
         d = tree()
-        for step in list(self._markings.keys()):
-            for net in self._markings[step].keys():
-                for place in self._markings[step][net].keys():
-                    for tk, n in self._markings[step][net][place].items():
+        m = self._markings
+        for step in list(m.keys()):
+            for net in m[step].keys():
+                for place in m[step][net].keys():
+                    for tk, n in m[step][net][place].items():
                         d[net][place][str(tk)][step] = n
 
         for net in d:
@@ -64,9 +64,10 @@ class Simulator():
                 title = "place " + place + " (" + net + ")"
                 plt.title(title)
                 for i, token in enumerate(d[net][place]):
-                    X = d[net][place][token].keys()
-                    Y = d[net][place][token].values()
-                    ax.plot(X, Y, label=token.lstrip("_"))
+                    if not "_net" in token:
+                        X = d[net][place][token].keys()
+                        Y = d[net][place][token].values()
+                        ax.plot(X, Y, label=token.lstrip("_"))
                 fig.legend()
                 #plt.show()
                 plt.savefig(os.path.join(self._output_path, title), bbox_inches="tight")
