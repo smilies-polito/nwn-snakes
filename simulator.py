@@ -27,6 +27,7 @@ class Simulator():
         self._draw = draw
 
     def execute(self, marking): #TODO livello di output (quiet, verbose, debug), tipi di output (csv e/o img)
+        self._module.draw(os.path.join(self._output_path, self._module.name + "_"))
         self._module.set_marking(marking)
         self._markings[0] = self._module.get_marking_count()
         if self._draw_nets:
