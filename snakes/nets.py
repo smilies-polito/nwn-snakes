@@ -2680,7 +2680,8 @@ class Transition (Node) :
                 for n in self._notify_input:
                     if isinstance(n, PetriNet):
                         # maialata da manuale
-                        place : str = list(binding.dict().values())[0]
+                        #place : str = list(binding.dict().values())[0]
+                        place: str = list(label.flow(binding))[0]
                         if n.has_place(place):
                             n.place(place).sync(BlackToken(), "remove")
                     elif isinstance(n, Place):
@@ -2692,7 +2693,8 @@ class Transition (Node) :
                 for n in self._notify_output:
                     if isinstance(n, PetriNet):
                         # maialata da manuale
-                        place : str = list(binding.dict().values())[0]
+                        #place : str = list(binding.dict().values())[0]
+                        place : str = list(label.flow(binding))[0]
                         if n.has_place(place):
                             n.place(place).sync(BlackToken(), "add")
                     elif isinstance(n, Place):
