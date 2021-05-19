@@ -11,3 +11,4 @@ __pycache__
 .idea/*
 main[0-9]*.py
 *.csv
+test_*/

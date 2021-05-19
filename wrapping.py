@@ -96,6 +96,21 @@ class Module(ABC):
             return
         return
 
+    def add_marking(self, marking):
+        self._add_marking(self._net, marking)
+
+    def _add_marking(self, node, marking):
+        if type(node) == PetriNet:
+            node.add_marking(marking[node.name])
+            for p in node.place():
+                self._add_marking(p, marking)
+            return
+        elif type(node) == Place:
+            for tk in node.tokens:
+                self._add_marking(tk, marking)
+            return
+        return
+
     def get_marking(self):
         return self._get_marking(self._net, defaultdict())
 
@@ -214,9 +229,10 @@ class Module(ABC):
                 # if here: one of the previous transitions selected during this same simulation step
                 # consumed a token that was needed by this transition to fire
                 pass
+                #print(e)
         #TODO spostare qua l'aggiornamento del count marking
 
-
+    #TODO aggiungere filtro sui token da plottare (impostabile dall'esterno, es. main della simulazione)
     def draw(self, path):
         self._draw(self._net, path)
 
