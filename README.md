@@ -6,8 +6,7 @@ Useful links
 ------------
 * [petrisim](https://github.com/leonardogian/nwn-petrisim), Nets within Nets simulator for Petri Nets modeled using nwn-snakes.
 * [bisdl2](https://github.com/leonardogian/nwn-bisdl2), the companion high-level modeling language and compiler to nwn-snakes syntax.
-* SNAKES homepage (documentation, tutorial, API reference, ...)
-  http://www.ibisc.univ-evry.fr/~fpommereau/SNAKES/
+* [SNAKES homepage](http://www.ibisc.univ-evry.fr/~fpommereau/SNAKES/) (documentation, tutorial, API reference, ...)
 
 Copyright / Licence
 -------------------
