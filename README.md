@@ -55,9 +55,12 @@ is supplemented with (deprived of) a black token.
 
 Useful links
 ------------
-* [petrisim](https://github.com/leonardogian/nwn-petrisim), Nets within Nets simulator for Petri Nets modeled using nwn-snakes.
-* [bisdl2](https://github.com/leonardogian/nwn-bisdl2), the companion high-level modeling language and compiler to nwn-snakes syntax.
-* [SNAKES homepage](http://www.ibisc.univ-evry.fr/~fpommereau/SNAKES/) (documentation, tutorial, API reference, ...)
+* [petrisim](https://github.com/leonardogian/nwn-petrisim), Nets within Nets simulator for Petri Nets modeled using 
+  nwn-snakes.
+* [bisdl2](https://github.com/leonardogian/nwn-bisdl2), the high-level Biology System Description Language (BiSDL) and 
+  compiler to nwn-snakes syntax.
+* [SNAKES homepage](http://www.ibisc.univ-evry.fr/~fpommereau/SNAKES/) with documentation, tutorial, and API reference 
+of the original library by Franck Pommereau.
 
 Copyright / Licence
 -------------------
