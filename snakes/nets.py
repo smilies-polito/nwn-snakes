@@ -2203,13 +2203,12 @@ class Place (Node) :
         self.tokens = MultiSet(tokens)
 
     """ update marking with token """
-    def sync(self, tk, action, num): #action = "add" or "remove"
+    def sync(self, tk, action, num=1): #action = "add" or "remove"
         if action == "add":
             [ self.tokens.add(tk) for _ in range(num) ]
         elif action == "remove":
-            for _ in range(num):
-                if tk in self.tokens:
-                    self.tokens.remove(tk)
+            if tk in self.tokens:
+                [ self.tokens.remove(tk) for _ in range(num) ]
 
 
 class Transition (Node) :
@@ -2237,10 +2236,10 @@ class Transition (Node) :
         self.name = name
 
     def set_notify_input(self, places):
-        [ self._notify_input.append(p) for p in places ] # if isinstance(p, Place) ]
+        [ self._notify_input.append(p) for p in places if p not in self._notify_input ] # if isinstance(p, Place) ]
 
     def set_notify_output(self, places):
-        [ self._notify_output.append(p) for p in places ] # if isinstance(p, Place) ]
+        [ self._notify_output.append(p) for p in places if p not in self._notify_output ] # if isinstance(p, Place) ]
 
     def copy (self, name=None) :
         """Return a copy of the transition, with no arc attached.
@@ -2701,43 +2700,63 @@ class Transition (Node) :
         @raise ValueError: when the provided binding does not enable
             the transition
         """
-        if self.enabled(binding) :
-            for place, label in self.input() :
+        if self.enabled(binding):
+            for place, label in self.input():
                 place.remove(label.flow(binding))
-                try:
-                    num_tk = len(label)
-                except:
-                    num_tk = 1
+            """ Notify input places """
+            for n in self._notify_input:
+                # if a PetriNet must be notified, it means that the regular transition removed "colored" tokens from
+                # a "high-level" Place that holds that net token. The net token models some phenomenon at a lower level.
+                # Therefore for each place in that net that has the same name as the "colored" tokens,
+                # we want to remove the same amount of black tokens from it
+                if isinstance(n, PetriNet):
+                    [_p_name] = set(label.flow(binding))  # get the place name from a single-element set ({'name'})
+                    if n.has_place(_p_name):
+                        # print("t prima", n.place(_p_name).tokens)
+                        try:
+                            [n.place(_p_name).remove(BlackToken()) for _ in range(len(label.flow(binding)))]
+                        except:
+                            print("porcoddio!")
+                        # print("t dopo", n.place(_p_name).tokens)
+                # if a Place must be notified, it means that the regular transition removed black tokens from
+                # a place that is "inside" a net token. This, in turn, is held by a "high-level" place
+                # where those same black tokens that were in Place "p" are represented as "colored" tokens named "p"
+                elif isinstance(n, Place):
+                    for _i in self.input():
+                        _p = _i[0]
+                        # print(_p, label.flow(binding))
+                        if isinstance(_p, Place):
+                            # print("t prima", n.tokens)
+                            [n.remove({_p.name}) for _ in range(len(label.flow(binding))) if str(_p) in n.tokens]
+                            # print("t dopo", n.tokens)
 
-                """ Notify input places """
-                for n in self._notify_input:
-                    if isinstance(n, PetriNet):
-                        # maialata da manuale
-                        #place : str = list(binding.dict().values())[0]
-                        place: str = list(label.flow(binding))[0]
-                        if n.has_place(place):
-                            n.place(place).sync(BlackToken(), "remove", num_tk)
-                    elif isinstance(n, Place):
-                        n.sync(str(place), "remove", num_tk)
-
-            for place, label in self.output() :
+            for place, label in self.output():
                 place.add(label.flow(binding))
-                try:
-                    num_tk = len(label)
-                except:
-                    num_tk = 1
-
-                """ Notify output places """
-                for n in self._notify_output:
-                    if isinstance(n, PetriNet):
-                        # maialata da manuale
-                        #place : str = list(binding.dict().values())[0]
-                        place : str = list(label.flow(binding))[0]
-                        if n.has_place(place):
-                            n.place(place).sync(BlackToken(), "add", num_tk)
-                    elif isinstance(n, Place):
-                        n.sync(str(place), "add", num_tk)
-        else :
+            """ Notify output places """
+            for n in self._notify_output:
+                # if a PetriNet must be notified, it means that the regular transition added "colored" tokens to
+                # a "high-level" Place that holds that net token. The net token models some phenomenon at a lower level.
+                # Therefore for each place in that net that has the same name as the "colored" tokens,
+                # we want to add the same amount of black tokens to it
+                if isinstance(n, PetriNet):
+                    # maialata da manuale
+                    [_p_name] = set(label.flow(binding))
+                    if n.has_place(_p_name):
+                        # print("t prima", n.place(_p_name).tokens)
+                        [n.place(_p_name).add(BlackToken()) for _ in range(len(label.flow(binding)))]
+                        # print("t dopo", n.place(_p_name).tokens)
+                # if a Place must be notified, it means that the regular transition added black tokens to
+                # a place that is "inside" a net token. This, in turn, is held by a "high-level" place
+                # where those same black tokens that were in Place "p" are represented as "colored" tokens named "p"
+                elif isinstance(n, Place):
+                    for _o in self.output():
+                        _p = _o[0]
+                        # print(_p, label.flow(binding))
+                        if isinstance(_p, Place):
+                            # print("t prima", n.tokens)
+                            [n.add({_p.name}) for _ in range(len(label.flow(binding)))]
+                            # print("t dopo", n.tokens)
+        else:
             raise ValueError("transition not enabled for %s" % binding)
 
 """
