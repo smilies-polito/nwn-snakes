@@ -2203,12 +2203,13 @@ class Place (Node) :
         self.tokens = MultiSet(tokens)
 
     """ update marking with token """
-    def sync(self, tk, action): #action = "add" or "remove"
+    def sync(self, tk, action, num): #action = "add" or "remove"
         if action == "add":
-            self.tokens.add(tk)
+            [ self.tokens.add(tk) for _ in range(num) ]
         elif action == "remove":
-            if tk in self.tokens:
-                self.tokens.remove(tk)
+            for _ in range(num):
+                if tk in self.tokens:
+                    self.tokens.remove(tk)
 
 
 class Transition (Node) :
@@ -2703,6 +2704,11 @@ class Transition (Node) :
         if self.enabled(binding) :
             for place, label in self.input() :
                 place.remove(label.flow(binding))
+                try:
+                    num_tk = len(label)
+                except:
+                    num_tk = 1
+
                 """ Notify input places """
                 for n in self._notify_input:
                     if isinstance(n, PetriNet):
@@ -2710,12 +2716,17 @@ class Transition (Node) :
                         #place : str = list(binding.dict().values())[0]
                         place: str = list(label.flow(binding))[0]
                         if n.has_place(place):
-                            n.place(place).sync(BlackToken(), "remove")
+                            n.place(place).sync(BlackToken(), "remove", num_tk)
                     elif isinstance(n, Place):
-                        n.sync(str(place), "remove")
+                        n.sync(str(place), "remove", num_tk)
 
             for place, label in self.output() :
                 place.add(label.flow(binding))
+                try:
+                    num_tk = len(label)
+                except:
+                    num_tk = 1
+
                 """ Notify output places """
                 for n in self._notify_output:
                     if isinstance(n, PetriNet):
@@ -2723,9 +2734,9 @@ class Transition (Node) :
                         #place : str = list(binding.dict().values())[0]
                         place : str = list(label.flow(binding))[0]
                         if n.has_place(place):
-                            n.place(place).sync(BlackToken(), "add")
+                            n.place(place).sync(BlackToken(), "add", num_tk)
                     elif isinstance(n, Place):
-                        n.sync(str(place), "add")
+                        n.sync(str(place), "add", num_tk)
         else :
             raise ValueError("transition not enabled for %s" % binding)
 
